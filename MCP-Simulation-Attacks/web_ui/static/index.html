@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Threat Laboratory</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>MCP Threat Laboratory</h1>
+    <p>Interactive walkthroughs of three MCP tool-security vulnerabilities</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-threat="1">Threat 1<span>Tool Poisoning</span></button>
+    <button class="tab" data-threat="2">Threat 2<span>Prompt Injection</span></button>
+    <button class="tab" data-threat="3">Threat 3<span>Over-Broad Scope</span></button>
+  </nav>
+
+  <main id="panels"></main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
