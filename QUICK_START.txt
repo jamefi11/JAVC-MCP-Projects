@@ -1,0 +1,258 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                   MCP THREAT LAB - QUICK START COMMANDS                       ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITES
+=============
+- Python 3.10+ installed
+- ~500MB disk space
+- Bash shell (macOS, Linux) or PowerShell (Windows with WSL)
+
+STEP 1: Download All Files
+==========================
+You should have these 5 files:
+  ✓ threat_lab_server.py         (9.3 KB)   - MCP server with vulnerable tools
+  ✓ threat_lab_client.py         (17 KB)    - Test harness
+  ✓ setup_threat_lab.sh          (5.7 KB)  - Automated setup
+  ✓ THREAT_LAB_README.md         (12 KB)   - This guide
+  ✓ MCP_Threat_Lab_Guide.md      (35 KB)   - Detailed walkthrough
+
+Also in outputs:
+  ✓ MCP_Threat_Model.docx        - Formal threat model for Threats 1-6
+
+STEP 2: Initialize Lab (One-Time Setup)
+========================================
+
+On macOS/Linux:
+  
+  chmod +x setup_threat_lab.sh
+  ./setup_threat_lab.sh
+
+Expected output:
+  ✓ Found Python: 3.X.X
+  ✓ Lab directory created/reset
+  ✓ Virtual environment activated
+  ✓ Dependencies installed
+  ✓ Directories created
+  ✓ Test data files created
+  ✓ Database initialized
+  
+  Lab location: ~/mcp-threat-lab
+
+STEP 3: Activate Lab Environment
+==================================
+
+  cd ~/mcp-threat-lab
+  source venv/bin/activate
+  
+You should see (venv) in your prompt:
+  (venv) $ 
+
+STEP 4: Run the Lab Tests (Main Event)
+=======================================
+
+  python threat_lab_client.py
+
+Expected output:
+  
+  ╔════════════════════════════════════════════════════════════════╗
+  ║         MCP THREAT LABORATORY - PROOF OF CONCEPT              ║
+  ╚════════════════════════════════════════════════════════════════╝
+
+  [SETUP] Initializing database...
+  [SETUP] Connecting to MCP server...
+  
+  ================================================================================
+   THREAT 1: TOOL POISONING
+  ================================================================================
+  
+  [BASELINE] Current user count...
+  [ATTACK] Calling poisoned_query with bypass...
+  ✗ VULNERABILITY CONFIRMED
+  
+  ================================================================================
+   THREAT 2: PROMPT INJECTION VIA TOOL RESULTS
+  ================================================================================
+  
+  [ATTACK] injection_vulnerable_query('sensitive_files/admin_config.txt')
+  ✗ VULNERABILITY CONFIRMED
+  
+  ================================================================================
+   THREAT 3: OVER-BROAD TOOL SCOPE
+  ================================================================================
+  
+  [TEST 1] Intended scope
+    Result: ✓ ACCESSIBLE (expected)
+  
+  [TEST 2] Directory traversal
+    Result: ✗ ACCESSIBLE (vulnerability!)
+  
+  Total runtime: ~10 seconds
+
+STEP 5: Review Output
+=====================
+
+Lab client will print:
+  1. Full description of each threat
+  2. Attack steps as they execute
+  3. Results (VULNERABLE vs SAFE)
+  4. Findings explaining why each threat works
+  5. Mitigation suggestions
+  6. Summary of all three threats
+
+TROUBLESHOOTING
+================
+
+Q: "ModuleNotFoundError: fastmcp"
+A: pip install fastmcp
+
+Q: "database is locked"
+A: rm lab.db && python threat_lab_client.py
+
+Q: Server doesn't respond
+A: Check Python version: python --version (need 3.10+)
+
+Q: No output at all
+A: Ensure both .py files in same directory
+   cd ~/mcp-threat-lab
+   ls -la threat_lab*.py
+
+Q: Permission denied on .env file
+A: chmod 644 test_files/secrets/.env
+
+WHAT EACH FILE DOES
+====================
+
+threat_lab_server.py
+  - FastMCP server with 5 tools
+  - 3 vulnerable: poisoned_query, injection_vulnerable_query, overscoped_file_access
+  - 2 safe: list_users, get_user
+  - Runs on stdio transport
+  - Communicates with test client via JSON-RPC
+
+threat_lab_client.py
+  - Main test harness you run
+  - Launches server as subprocess
+  - Calls each tool with attack payloads
+  - Observes results and database state changes
+  - Reports findings for each threat
+  - ~500 lines, extensively commented
+
+setup_threat_lab.sh
+  - One-time initialization script
+  - Creates ~/mcp-threat-lab directory
+  - Sets up Python virtual environment
+  - Installs fastmcp via pip
+  - Creates test file structure
+  - Initializes SQLite database with 3 test users
+  - Creates injection payloads and secrets
+
+MCP_Threat_Lab_Guide.md
+  - Comprehensive step-by-step guide
+  - 400+ lines of detailed documentation
+  - Backend options (SQLite vs PostgreSQL)
+  - Code walkthrough for each threat
+  - Hardened (safe) implementations
+  - Advanced topics and next steps
+
+THREAT_LAB_README.md
+  - Quick reference (this file)
+  - Setup instructions
+  - Expected output examples
+  - File directory structure
+  - Observations to make
+  - Troubleshooting
+
+RUNNING THE LAB (Complete Flow)
+================================
+
+  1. Download all 5 files to a directory
+  2. chmod +x setup_threat_lab.sh
+  3. ./setup_threat_lab.sh                          [~30 seconds]
+  4. cd ~/mcp-threat-lab
+  5. source venv/bin/activate
+  6. python threat_lab_client.py                    [~10 seconds]
+  7. Read output and findings
+  8. Review MCP_Threat_Lab_Guide.md for details
+
+Total time: ~2-3 minutes for complete lab + findings
+
+WHAT YOU'LL OBSERVE
+===================
+
+Threat 1: Tool Poisoning
+  ✗ User record deleted from database
+    (count drops from 3 to 2)
+  Why: Tool's actual implementation violates its schema declaration
+
+Threat 2: Prompt Injection
+  ✗ Tool returned unescaped file content with injected directives
+    (contains "SYSTEM PROMPT OVERRIDE", "IGNORE_SAFETY_CHECKS")
+  Why: Tool result inserted directly into LLM prompt without sanitization
+
+Threat 3: Over-Broad Scope
+  ✗ Tool accepted directory traversal paths (../) and absolute paths
+    (.secrets/.env, ./server.py both readable)
+  Why: Schema declares narrow scope but implementation has no validation
+
+NEXT STEPS
+==========
+
+1. UNDERSTAND: Read MCP_Threat_Lab_Guide.md (detailed explanations)
+
+2. EXPERIMENT: Modify threat_lab_server.py
+   - Change the magic bypass string: '--UNSAFE_BYPASS' -> '--SECRET123'
+   - Rerun: python threat_lab_client.py
+   - Observe: Attack still works if you use new bypass string
+
+3. HARDEN: Implement safe versions in new file threat_lab_server_hardened.py
+   - Remove magic strings
+   - Add output boundary markers
+   - Enforce path validation with allowlist
+
+4. COMPARE: Run both servers side-by-side
+   - Vulnerable: python threat_lab_client.py
+   - Hardened: python threat_lab_client_hardened.py
+   - Observe: Which attacks succeed? Which are blocked?
+
+5. INTEGRATE: Add LLM client
+   - Use Claude API to invoke tools
+   - Watch how LLM responds to injected prompts
+   - Test if LLM detects malicious payloads
+
+6. SCALE: Test with PostgreSQL backend
+   - See MCP_Threat_Lab_Guide.md > Backend Option B
+
+SECURITY NOTES
+==============
+
+⚠ This lab contains REAL vulnerabilities
+  - Do NOT use test_lab_server.py in production
+  - Do NOT expose this lab to untrusted networks
+  - Lab is for TESTING AND EDUCATION ONLY
+  - Vulnerabilities are intentional for demonstration
+
+✓ Lab is ISOLATED
+  - Runs on localhost only
+  - SQLite database is local file
+  - No network exposure by default
+  - Safe to run on development machine
+
+REFERENCES
+===========
+
+MCP Specification
+  https://spec.modelcontextprotocol.io/
+
+FastMCP Documentation
+  https://github.com/jlouis/fastmcp
+
+SQLite Documentation
+  https://www.sqlite.org/docs.html
+
+Threat Model Document
+  See: MCP_Threat_Model.docx (formal 6-threat security model)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Questions? See MCP_Threat_Lab_Guide.md or THREAT_LAB_README.md
