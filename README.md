@@ -213,6 +213,5 @@ The `MCP_Threat_Lab_Guide.md` includes complete hardened variants for all three 
 
 ## Author
 
-**Jaime Alberto Varela Calderón**  
-Strategic Client Architect, Salesforce  
-UNT MBA — BCIS 5140 Section 401, Fall 2026 8W1
+**Jaime Alberto Varela Calderón**   
+UNT MBA — BCIS 5140 Section 401
